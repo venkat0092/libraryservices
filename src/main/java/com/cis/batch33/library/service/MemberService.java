@@ -1,45 +1,156 @@
 package com.cis.batch33.library.service;
 
-//import com.cis.batch33.library.model.Member;
-
+import com.cis.batch33.library.entity.Address;
+import com.cis.batch33.library.entity.Checkout;
 import com.cis.batch33.library.entity.LibraryMember;
-import com.cis.batch33.library.repository.LibraryBookRepository;
+import com.cis.batch33.library.model.AddressDTO;
+import com.cis.batch33.library.model.CheckoutDTO;
+import com.cis.batch33.library.model.Member;
 import com.cis.batch33.library.repository.LibraryMemberRepository;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class MemberService {
     @Autowired
     private LibraryMemberRepository memberRepository;
-    @Autowired
-    private LibraryBookRepository libraryBookRepository;
+    /*@Autowired
+    private LibraryBookRepository libraryBookRepository;*/
 
     //private Map<Long, Member> memberMap = new HashMap<>();
 
-    public LibraryMember createMember(LibraryMember member){
+    public Member createMember(Member member){
 
         // call the database
         //Integer memberId = new Random().nextInt();
         //member.setMemberId(memberId);
         //memberMap.put(memberId, member);
         //return  member;
-        return memberRepository.save(member);
+
+        // Create a new LibraryMember object
+        LibraryMember libraryMember = new LibraryMember();
+
+        // Manually map properties from LibraryMemberDTO to LibraryMember
+        BeanUtils.copyProperties(member, libraryMember);
+
+        // If the address field is not null, map its properties to LibraryMember's Address
+        if (member.getAddress() != null) {
+            Address address = new Address();
+            BeanUtils.copyProperties(member.getAddress(), address);
+            libraryMember.setAddress(address);
+        }
+
+        // If the checkouts field is not null, map its properties to LibraryMember's Checkouts
+        if (member.getCheckouts() != null) {
+            List<Checkout> checkouts = member.getCheckouts().stream().map(dto -> {
+                Checkout checkout = new Checkout();
+                BeanUtils.copyProperties(dto, checkout);
+                return checkout;
+            }).collect(Collectors.toList());
+            libraryMember.setCheckouts(checkouts);
+        }
+
+        // Save the LibraryMember to the database
+        LibraryMember savedLibraryMember = memberRepository.save(libraryMember);
+
+        // Create a new Member object to return
+        Member savedMember = new Member();
+
+        // Manually map properties from saved LibraryMember to Member
+        BeanUtils.copyProperties(savedLibraryMember, savedMember);
+
+        // Return the saved LibraryMember
+        return savedMember;
+
     }
 
 
-    public LibraryMember getMember(Integer memberId) {
+    public Member getMember(Integer memberId) {
         //return memberMap.get(memberId);
-        Optional<LibraryMember> memberOptional = memberRepository.findById(memberId);
-        return  memberOptional.orElse(new LibraryMember());
+        Optional<LibraryMember> memberOptional =
+                memberRepository.findById(memberId);
+        LibraryMember libraryMember =
+                memberOptional.orElse(new LibraryMember());
+
+        Member member = new Member();
+        member.setMemberId(libraryMember.getMemberId());
+        member.setMemberShipLevel(libraryMember.getMemberShipLevel());
+        member.setEmailAddress(libraryMember.getEmailAddress());
+        member.setFirstName(libraryMember.getFirstName());
+        member.setLastName(libraryMember.getLastName());
+        member.setPhoneNumber(libraryMember.getPhoneNumber());
+
+        AddressDTO addressDTO = new AddressDTO();
+        addressDTO.setAddressId(libraryMember.getAddress().getAddressId());
+        addressDTO.setLine1(libraryMember.getAddress().getLine1());
+        addressDTO.setLine2(libraryMember.getAddress().getLine2());
+        addressDTO.setCity(libraryMember.getAddress().getCity());
+        addressDTO.setState(libraryMember.getAddress().getState());
+        addressDTO.setZip(libraryMember.getAddress().getZip());
+
+        List<CheckoutDTO> checkoutDTOS =
+                libraryMember.getCheckouts().stream().map(c -> {
+                    CheckoutDTO cdo = new CheckoutDTO();
+                    cdo.setId(c.getId());
+                    cdo.setIsbn(c.getIsbn().getIsbn());
+                    cdo.setCheckoutDate(c.getCheckoutDate());
+                    cdo.setDueDate(c.getDueDate());
+                    cdo.setReturned(c.isReturned());
+                    return  cdo;
+                }).collect(Collectors.toList());
+
+        member.setAddress(addressDTO);
+        member.setCheckouts(checkoutDTOS);
+
+        return member;
+
     }
 
-    public LibraryMember updateMember(LibraryMember member) {
+    public Member updateMember(Member member) {
         //Integer memberId = member.getMemberId();
         //memberMap.put(memberId, LibraryMember);
-        return memberRepository.save(member);
+//        return memberRepository.save(member);
+
+        // Create a new LibraryMember object
+        LibraryMember libraryMember = new LibraryMember();
+
+        // Manually map properties from LibraryMemberDTO to LibraryMember
+        BeanUtils.copyProperties(member, libraryMember);
+
+        // If the address field is not null, map its properties to LibraryMember's Address
+        if (member.getAddress() != null) {
+            Address address = new Address();
+            BeanUtils.copyProperties(member.getAddress(), address);
+            libraryMember.setAddress(address);
+        }
+
+        // If the checkouts field is not null, map its properties to LibraryMember's Checkouts
+        if (member.getCheckouts() != null) {
+            List<Checkout> checkouts = member.getCheckouts().stream().map(dto -> {
+                Checkout checkout = new Checkout();
+                BeanUtils.copyProperties(dto, checkout);
+                return checkout;
+            }).collect(Collectors.toList());
+            libraryMember.setCheckouts(checkouts);
+        }
+
+        // Save the LibraryMember to the database
+        LibraryMember savedLibraryMember = memberRepository.save(libraryMember);
+
+        // Create a new Member object to return
+        Member savedMember = new Member();
+
+        // Manually map properties from saved LibraryMember to Member
+        BeanUtils.copyProperties(savedLibraryMember, savedMember);
+
+        // Return the saved LibraryMember
+        return savedMember;
+
     }
 
     public void deleteMember(Integer memberId) {
